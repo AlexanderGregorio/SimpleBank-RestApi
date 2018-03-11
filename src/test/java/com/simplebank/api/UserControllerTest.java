@@ -1,132 +1,144 @@
 package com.simplebank.api;
 
 import com.simplebank.model.ApiErrorMessage;
-import com.simplebank.model.Doc;
+import com.simplebank.model.User;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import static com.simplebank.constant.ErrorMessages.DOC_NOT_FOUND;
+import static com.simplebank.constant.ErrorMessages.USER_NOT_FOUND;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
-public class DocControllerTest extends AbstractTest {
+public class UserControllerTest extends AbstractTest {
 
-    private Doc getValidDoc() throws Exception {
-        Doc doc = entityFactory.getRandomObject(Doc.class);
+    private User getValidUser() throws Exception {
+        User user = entityFactory.getRandomObject(User.class);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
+        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
+                .content(parser.asString(user)))
                 .andReturn().getResponse();
 
-        return parser.asObject(response.getContentAsString(), Doc.class);
+        return parser.asObject(response.getContentAsString(), User.class);
     }
 
     @Test
     public void shouldReturnOk_whenPost() throws Exception{
         // Given
-        Doc doc = entityFactory.getRandomObject(Doc.class);
+        User user = entityFactory.getRandomObject(User.class);
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
+        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
+                .content(parser.asString(user)))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.CREATED.value()));
-        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
-        assertNotNull(docReturned.getId());
-        assertEquals(doc.getFromUser(), docReturned.getFromUser());
-        assertEquals(doc.getToUser(), docReturned.getToUser());
-        assertEquals(doc.getValue(), docReturned.getValue());
-        assertEquals(doc.getCurrency(), docReturned.getCurrency());
+        User userReturned = parser.asObject(response.getContentAsString(), User.class);
+        assertEquals(user, userReturned);
+    }
+
+    @Test
+    public void shouldReturnConflic_whenPost_idAlreadyExists() throws Exception{
+        // Given
+        User user = getValidUser();
+
+        // When
+        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(parser.asString(user)))
+                .andDo(print())
+                .andReturn().getResponse();
+
+        // Then
+        assertThat(response.getStatus(), is(HttpStatus.CONFLICT.value()));
     }
 
     @Test
     public void shouldReturnOk_whenGet() throws Exception{
         // Given
-        Doc doc = getValidDoc();
+        User user = getValidUser();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + doc.getId()))
+        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + user.getDocumentCode()))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.OK.value()));
-        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
-        assertEquals(doc, docReturned);
+        User userReturned = parser.asObject(response.getContentAsString(), User.class);
+        assertEquals(user, userReturned);
     }
 
     @Test
     public void shouldReturnNotFound_whenGet_idDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + Long.MAX_VALUE))
+        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + Long.MAX_VALUE))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc/" + Long.MAX_VALUE));
+        assertThat(errorMessage.getPath(), is("/api/user/" + Long.MAX_VALUE));
     }
 
     @Test
     public void shouldReturnOk_whenPut() throws Exception{
         // Given
-        Doc doc = getValidDoc();
+        User user = getValidUser();
 
         // When
-        doc.setToUser("Sara");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
+        user.setName("Samantha");
+        MockHttpServletResponse response = mockMvc.perform(put("/api/user")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
+                .content(parser.asString(user)))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.OK.value()));
-        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
-        assertEquals(doc, docReturned);
+        User userReturned = parser.asObject(response.getContentAsString(), User.class);
+        assertEquals(user, userReturned);
     }
 
     @Test
     public void shouldReturnNotFound_whenPut_idDoesntExist() throws Exception{
         // Given
-        Doc doc = entityFactory.getRandomObject(Doc.class);
-        doc.setId(Long.MAX_VALUE);
+        User user = entityFactory.getRandomObject(User.class);
+        user.setDocumentCode(String.valueOf(Long.MAX_VALUE));
 
         // When
-        doc.setToUser("Sara");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
+        user.setName("Sara");
+        MockHttpServletResponse response = mockMvc.perform(put("/api/user")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
+                .content(parser.asString(user)))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc"));
+        assertThat(errorMessage.getPath(), is("/api/user"));
     }
 
     @Test
     public void shouldReturnOk_whenDelete() throws Exception{
         // Given
-        Doc doc = getValidDoc();
+        User user = getValidUser();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + doc.getId()))
+        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + user.getDocumentCode()))
                 .andDo(print())
                 .andReturn().getResponse();
 
@@ -137,15 +149,15 @@ public class DocControllerTest extends AbstractTest {
     @Test
     public void shouldReturnNotFound_whenDelete_idDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + Long.MAX_VALUE))
+        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + Long.MAX_VALUE))
                 .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc/" + Long.MAX_VALUE));
+        assertThat(errorMessage.getPath(), is("/api/user/" + Long.MAX_VALUE));
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
 
-import static com.simplebank.constants.ErrorMessages.DOC_NOT_FOUND;
+import static com.simplebank.constant.ErrorMessages.DOC_NOT_FOUND;
 
 @RestController
 @RequestMapping(path = "/api/doc", produces = "application/json")

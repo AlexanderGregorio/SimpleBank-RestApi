@@ -1,6 +1,6 @@
 package com.simplebank.api;
 
-import com.simplebank.test.factory.DocFactory;
+import com.simplebank.test.factory.EntityFactory;
 import com.simplebank.test.parser.Parser;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +21,6 @@ public abstract class AbstractTest {
     protected Parser parser;
 
     @Autowired
-    protected DocFactory docFactory;
+    protected EntityFactory entityFactory;
 
 }

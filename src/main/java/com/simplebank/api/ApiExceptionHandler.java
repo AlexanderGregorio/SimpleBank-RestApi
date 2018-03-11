@@ -1,5 +1,6 @@
 package com.simplebank.api;
 
+import com.simplebank.exception.ElementAlreadyExistException;
 import com.simplebank.model.ApiErrorMessage;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,12 +16,21 @@ import java.util.NoSuchElementException;
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = { NoSuchElementException.class })
-    protected ResponseEntity<Object> handleConflict(RuntimeException ex, WebRequest request) {
+    protected ResponseEntity<Object> handleNotFound(RuntimeException ex, WebRequest request) {
         ApiErrorMessage errorMessage = new ApiErrorMessage(ex.getMessage(),
                 request.getDescription(false).replace("uri=", ""));
 
         return handleExceptionInternal(ex, errorMessage,
                 new HttpHeaders(), HttpStatus.NOT_FOUND, request);
+    }
+
+    @ExceptionHandler(value = { ElementAlreadyExistException.class })
+    protected ResponseEntity<Object> handleConflict(RuntimeException ex, WebRequest request) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(ex.getMessage(),
+                request.getDescription(false).replace("uri=", ""));
+
+        return handleExceptionInternal(ex, errorMessage,
+                new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 
 }
