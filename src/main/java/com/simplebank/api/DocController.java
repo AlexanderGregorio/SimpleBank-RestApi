@@ -1,12 +1,17 @@
 package com.simplebank.api;
 
 import com.simplebank.model.Doc;
+import com.simplebank.repository.DocRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/com/simplebank/api/doc", produces = "application/json")
+@RequestMapping(path = "/api/doc", produces = "application/json")
 public class DocController {
+
+    @Autowired
+    DocRepository repository;
 
     @RequestMapping(method = RequestMethod.POST)
     @ResponseStatus(code = HttpStatus.CREATED)
