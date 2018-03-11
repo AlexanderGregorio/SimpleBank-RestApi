@@ -15,6 +15,5 @@ dependencies {
             "org.projectlombok:lombok:1.16.20",
             "com.h2database:h2:1.4.196")
 
-    testCompile("org.springframework.boot:spring-boot-starter-test:2.0.0.RELEASE",
-                "com.fasterxml.jackson.core:jackson-core:2.9.4")
+    testCompile("org.springframework.boot:spring-boot-starter-test:2.0.0.RELEASE")
 }
