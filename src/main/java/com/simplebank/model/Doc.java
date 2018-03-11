@@ -1,6 +1,7 @@
 package com.simplebank.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 
 @Data
 @Entity
+@NoArgsConstructor
 public class Doc {
 
     @Id
@@ -21,4 +23,12 @@ public class Doc {
 
     private BigDecimal value;
     private String currency;
+
+    public Doc(String fromUser, String toUser, BigDecimal value, String currency) {
+        this.fromUser = fromUser;
+        this.toUser = toUser;
+        this.value = value;
+        this.currency = currency;
+    }
+
 }

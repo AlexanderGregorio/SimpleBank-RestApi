@@ -1,77 +1,98 @@
 package com.simplebank.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simplebank.model.Doc;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@WebMvcTest(DocController.class)
-@Slf4j
-public abstract class DocControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+public class DocControllerTest extends AbstractTest {
 
     @Test
     public void shouldReturnOk_whenPost() throws Exception{
-        mockMvc.perform(post("/")
+        // Given
+        Doc doc = docFactory.getRandomDoc();
+
+        // When
+        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(asJsonString(new Doc())))
+                .content(parser.asString(doc)))
                 .andDo(log())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Ok")));
+                .andReturn().getResponse();
+
+        // Then
+        assertThat(response.getStatus(), is(HttpStatus.CREATED.value()));
+        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
+        assertEquals(doc, docReturned);
     }
 
     @Test
     public void shouldReturnOk_whenGet() throws Exception{
-        mockMvc.perform(get("/")).andDo(log())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Ok")));
+        // Given
+        Doc doc = docFactory.getRandomDoc();
+
+        mockMvc.perform(post("/api/doc")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(parser.asString(doc)))
+                .andDo(log());
+
+        // When
+        MockHttpServletResponse response = mockMvc.perform(get("/api/doc?id=" + doc.getId()))
+                .andDo(log())
+                .andReturn().getResponse();
+
+        // Then
+        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
+        assertEquals(doc, docReturned);
     }
 
     @Test
     public void shouldReturnOk_whenPut() throws Exception{
-        mockMvc.perform(put("/")
+        // Given
+        Doc doc = docFactory.getRandomDoc();
+
+        mockMvc.perform(post("/api/doc")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(asJsonString(new Doc())))
+                .content(parser.asString(doc)))
+                .andDo(log());
+
+        // When
+        doc.setToUser("Sara");
+        MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(parser.asString(doc)))
                 .andDo(log())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Ok")));
+                .andReturn().getResponse();
+
+        // Then
+        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
+        assertEquals(doc, docReturned);
     }
 
     @Test
     public void shouldReturnOk_whenDelete() throws Exception{
-        mockMvc.perform(delete("/")
+        // Given
+        Doc doc = docFactory.getRandomDoc();
+
+        mockMvc.perform(post("/api/doc")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(asJsonString(new Doc())))
+                .content(parser.asString(doc)))
+                .andDo(log());
+
+        // When
+        MockHttpServletResponse response = mockMvc.perform(get("/api/doc?id=" + doc.getId()))
                 .andDo(log())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Ok")));
-    }
+                .andReturn().getResponse();
 
-    private String asJsonString(Doc doc) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.writeValueAsString(doc);
-        }
-        catch (JsonProcessingException e) {
-            log.error("There was a problem parsing the object.", e);
-        }
-
-        return null;
+        // Then
+        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
     }
 }
