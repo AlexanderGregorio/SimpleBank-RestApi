@@ -10,9 +10,20 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
 public class DocControllerTest extends AbstractTest {
+
+    private Doc getValidDoc() throws Exception {
+        Doc doc = docFactory.getRandomDoc();
+
+        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .content(parser.asString(doc)))
+                .andReturn().getResponse();
+
+        return parser.asObject(response.getContentAsString(), Doc.class);
+    }
 
     @Test
     public void shouldReturnOk_whenPost() throws Exception{
@@ -23,28 +34,26 @@ public class DocControllerTest extends AbstractTest {
         MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(parser.asString(doc)))
-                .andDo(log())
+                .andDo(print())
                 .andReturn().getResponse();
 
         // Then
         assertThat(response.getStatus(), is(HttpStatus.CREATED.value()));
         Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
-        assertEquals(doc, docReturned);
+        assertEquals(doc.getFromUser(), docReturned.getFromUser());
+        assertEquals(doc.getToUser(), docReturned.getToUser());
+        assertEquals(doc.getValue(), docReturned.getValue());
+        assertEquals(doc.getCurrency(), docReturned.getCurrency());
     }
 
     @Test
     public void shouldReturnOk_whenGet() throws Exception{
         // Given
-        Doc doc = docFactory.getRandomDoc();
-
-        mockMvc.perform(post("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(log());
+        Doc doc = getValidDoc();
 
         // When
         MockHttpServletResponse response = mockMvc.perform(get("/api/doc?id=" + doc.getId()))
-                .andDo(log())
+                .andDo(print())
                 .andReturn().getResponse();
 
         // Then
@@ -56,19 +65,14 @@ public class DocControllerTest extends AbstractTest {
     @Test
     public void shouldReturnOk_whenPut() throws Exception{
         // Given
-        Doc doc = docFactory.getRandomDoc();
-
-        mockMvc.perform(post("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(log());
+        Doc doc = getValidDoc();
 
         // When
         doc.setToUser("Sara");
         MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
                 .contentType(MediaType.APPLICATION_JSON_UTF8)
                 .content(parser.asString(doc)))
-                .andDo(log())
+                .andDo(print())
                 .andReturn().getResponse();
 
         // Then
@@ -80,16 +84,11 @@ public class DocControllerTest extends AbstractTest {
     @Test
     public void shouldReturnOk_whenDelete() throws Exception{
         // Given
-        Doc doc = docFactory.getRandomDoc();
-
-        mockMvc.perform(post("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(log());
+        Doc doc = getValidDoc();
 
         // When
         MockHttpServletResponse response = mockMvc.perform(get("/api/doc?id=" + doc.getId()))
-                .andDo(log())
+                .andDo(print())
                 .andReturn().getResponse();
 
         // Then
