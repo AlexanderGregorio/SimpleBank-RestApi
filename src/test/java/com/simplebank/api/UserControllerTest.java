@@ -1,27 +1,22 @@
 package com.simplebank.api;
 
+import com.simplebank.model.Account;
 import com.simplebank.model.ApiErrorMessage;
 import com.simplebank.model.User;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static com.simplebank.constant.ErrorMessages.USER_NOT_FOUND;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class UserControllerTest extends AbstractTest {
 
     private User getValidUser() throws Exception {
         User user = entityFactory.getRandomObject(User.class);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(user)))
-                .andReturn().getResponse();
+        MockHttpServletResponse response = post(uriBuilder.userUri(), user);
 
         return parser.asObject(response.getContentAsString(), User.class);
     }
@@ -32,32 +27,24 @@ public class UserControllerTest extends AbstractTest {
         User user = entityFactory.getRandomObject(User.class);
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(user)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = post(uriBuilder.userUri(), user);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.CREATED.value()));
+        assertEquals(HttpStatus.CREATED.value(), response.getStatus());
         User userReturned = parser.asObject(response.getContentAsString(), User.class);
         assertEquals(user, userReturned);
     }
 
     @Test
-    public void shouldReturnConflic_whenPost_idAlreadyExists() throws Exception{
+    public void shouldReturnConflic_whenPost_ifIdAlreadyExists() throws Exception{
         // Given
         User user = getValidUser();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(post("/api/user")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(user)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = post(uriBuilder.userUri(), user);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.CONFLICT.value()));
+        assertEquals(HttpStatus.CONFLICT.value(), response.getStatus());
     }
 
     @Test
@@ -66,29 +53,25 @@ public class UserControllerTest extends AbstractTest {
         User user = getValidUser();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + user.getDocumentCode()))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = get(uriBuilder.userElementUri(user.getDocumentCode()));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
         User userReturned = parser.asObject(response.getContentAsString(), User.class);
         assertEquals(user, userReturned);
     }
 
     @Test
-    public void shouldReturnNotFound_whenGet_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenGet_ifIdDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + Long.MAX_VALUE))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = get(uriBuilder.userElementUri("someRandomId"));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(USER_NOT_FOUND, "someRandomId"), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/user/" + Long.MAX_VALUE));
+        assertEquals(uriBuilder.userElementUri("someRandomId"), errorMessage.getPath());
     }
 
     @Test
@@ -98,38 +81,30 @@ public class UserControllerTest extends AbstractTest {
 
         // When
         user.setName("Samantha");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/user")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(user)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = put(uriBuilder.userUri(), user);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
         User userReturned = parser.asObject(response.getContentAsString(), User.class);
         assertEquals(user, userReturned);
     }
 
     @Test
-    public void shouldReturnNotFound_whenPut_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenPut_ifIdDoesntExist() throws Exception{
         // Given
         User user = entityFactory.getRandomObject(User.class);
         user.setDocumentCode(String.valueOf(Long.MAX_VALUE));
 
         // When
         user.setName("Sara");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/user")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(user)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = put(uriBuilder.userUri(), user);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(USER_NOT_FOUND, Long.MAX_VALUE), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/user"));
+        assertEquals(uriBuilder.userUri(), errorMessage.getPath());
     }
 
     @Test
@@ -138,26 +113,39 @@ public class UserControllerTest extends AbstractTest {
         User user = getValidUser();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + user.getDocumentCode()))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = delete(uriBuilder.userElementUri(user.getDocumentCode()));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
     }
 
     @Test
-    public void shouldReturnNotFound_whenDelete_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenDelete_ifIdDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/user/" + Long.MAX_VALUE))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = delete(uriBuilder.userElementUri("someRandomId"));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(USER_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(USER_NOT_FOUND, "someRandomId"), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/user/" + Long.MAX_VALUE));
+        assertEquals(uriBuilder.userElementUri("someRandomId"), errorMessage.getPath());
+    }
+
+    @Test
+    public void shouldReturnOk_whenGet_ifAccountIsDeleted() throws Exception{
+        // Given
+        Account account = entityFactory.getRandomObject(Account.class);
+        post(uriBuilder.userUri(), account.getOwner());
+        account = parser.asObject(post(uriBuilder.accountUri(), account).getContentAsString(), Account.class);
+
+        // When
+        delete(uriBuilder.accountElementUri(account.getBankCode(), account.getAccountCode()));
+        MockHttpServletResponse response = get(uriBuilder.userElementUri(account.getOwner().getDocumentCode()));
+
+        // Then
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
+        User userReturned = parser.asObject(response.getContentAsString(), User.class);
+        assertEquals(account.getOwner(), userReturned);
     }
 }

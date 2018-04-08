@@ -14,13 +14,13 @@ import java.io.IOException;
 @Slf4j
 public class Parser {
 
-    public <T> T asObject(String json, Class<T> clazz) {
+    public <T> T asObject(String json, Class<T> elementType) {
         try {
             ObjectMapper mapper = new ObjectMapper()
                     .registerModule(new ParameterNamesModule())
                     .registerModule(new Jdk8Module())
                     .registerModule(new JavaTimeModule());
-            return mapper.readValue(json, clazz);
+            return mapper.readValue(json, elementType);
         }
         catch (IOException e) {
             log.error("There was a problem parsing the object.", e);

@@ -27,14 +27,6 @@ public class UserController {
         return repository.save(request);
     }
 
-    @RequestMapping(path = "/{documentCode}", method = RequestMethod.GET)
-    @ResponseStatus(code = HttpStatus.OK)
-    @ResponseBody
-    public User get(@PathVariable("documentCode") String documentCode) {
-        throwExceptionIfUserDoesntExist(documentCode);
-        return repository.findById(documentCode).get();
-    }
-
     @RequestMapping(method = RequestMethod.PUT)
     @ResponseStatus(code = HttpStatus.OK)
     @ResponseBody
@@ -43,9 +35,17 @@ public class UserController {
         return repository.save(request);
     }
 
+    @RequestMapping(path = "/{documentCode}", method = RequestMethod.GET)
+    @ResponseStatus(code = HttpStatus.OK)
+    @ResponseBody
+    public User get(@PathVariable("documentCode") String documentCode) {
+        throwExceptionIfUserDoesntExist(documentCode);
+        return repository.findById(documentCode).get();
+    }
+
     @RequestMapping(path = "/{documentCode}", method = RequestMethod.DELETE)
     @ResponseStatus(code = HttpStatus.OK)
-    public void delete(@RequestParam("documentCode") String documentCode) {
+    public void delete(@PathVariable("documentCode") String documentCode) {
         throwExceptionIfUserDoesntExist(documentCode);
         repository.deleteById(documentCode);
     }

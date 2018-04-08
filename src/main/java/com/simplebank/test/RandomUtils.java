@@ -38,8 +38,11 @@ public class RandomUtils {
         return new BigDecimal(numberString.toString());
     }
 
-    public String nextDocumentCode() {
+    public String nextNumericString() {
         return String.valueOf(Math.abs(random.nextInt()));
     }
 
+    public Long nextLong() {
+        return random.nextLong();
+    }
 }

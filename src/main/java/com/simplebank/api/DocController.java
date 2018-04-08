@@ -24,14 +24,6 @@ public class DocController {
         return repository.save(request);
     }
 
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
-    @ResponseStatus(code = HttpStatus.OK)
-    @ResponseBody
-    public Doc get(@PathVariable("id") Long id) {
-        throwExceptionIfDocDoesntExist(id);
-        return repository.findById(id).get();
-    }
-
     @RequestMapping(method = RequestMethod.PUT)
     @ResponseStatus(code = HttpStatus.OK)
     @ResponseBody
@@ -40,9 +32,17 @@ public class DocController {
         return repository.save(request);
     }
 
+    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
+    @ResponseStatus(code = HttpStatus.OK)
+    @ResponseBody
+    public Doc get(@PathVariable("id") Long id) {
+        throwExceptionIfDocDoesntExist(id);
+        return repository.findById(id).get();
+    }
+
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
     @ResponseStatus(code = HttpStatus.OK)
-    public void delete(@RequestParam("id") Long id) {
+    public void delete(@PathVariable("id") Long id) {
         throwExceptionIfDocDoesntExist(id);
         repository.deleteById(id);
     }

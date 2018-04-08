@@ -4,24 +4,18 @@ import com.simplebank.model.ApiErrorMessage;
 import com.simplebank.model.Doc;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import static com.simplebank.constant.ErrorMessages.DOC_NOT_FOUND;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class DocControllerTest extends AbstractTest {
 
     private Doc getValidDoc() throws Exception {
         Doc doc = entityFactory.getRandomObject(Doc.class);
 
-        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andReturn().getResponse();
+        MockHttpServletResponse response = post(uriBuilder.docUri(), doc);
 
         return parser.asObject(response.getContentAsString(), Doc.class);
     }
@@ -32,14 +26,10 @@ public class DocControllerTest extends AbstractTest {
         Doc doc = entityFactory.getRandomObject(Doc.class);
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(post("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = post(uriBuilder.docUri(), doc);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.CREATED.value()));
+        assertEquals(HttpStatus.CREATED.value(), response.getStatus());
         Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
         assertNotNull(docReturned.getId());
         assertEquals(doc.getFromUser(), docReturned.getFromUser());
@@ -54,29 +44,25 @@ public class DocControllerTest extends AbstractTest {
         Doc doc = getValidDoc();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + doc.getId()))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = get(uriBuilder.docElementUri(doc.getId()));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
         Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
         assertEquals(doc, docReturned);
     }
 
     @Test
-    public void shouldReturnNotFound_whenGet_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenGet_ifIdDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + Long.MAX_VALUE))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = get(uriBuilder.docElementUri(Long.MAX_VALUE));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(DOC_NOT_FOUND, Long.MAX_VALUE), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc/" + Long.MAX_VALUE));
+        assertEquals(uriBuilder.docElementUri(Long.MAX_VALUE), errorMessage.getPath());
     }
 
     @Test
@@ -86,38 +72,30 @@ public class DocControllerTest extends AbstractTest {
 
         // When
         doc.setToUser("Sara");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = put(uriBuilder.docUri(), doc);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
         Doc docReturned = parser.asObject(response.getContentAsString(), Doc.class);
         assertEquals(doc, docReturned);
     }
 
     @Test
-    public void shouldReturnNotFound_whenPut_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenPut_ifIdDoesntExist() throws Exception{
         // Given
         Doc doc = entityFactory.getRandomObject(Doc.class);
         doc.setId(Long.MAX_VALUE);
+        doc.setToUser("Sara");
 
         // When
-        doc.setToUser("Sara");
-        MockHttpServletResponse response = mockMvc.perform(put("/api/doc")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(parser.asString(doc)))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = put(uriBuilder.docUri(), doc);
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(DOC_NOT_FOUND, Long.MAX_VALUE), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc"));
+        assertEquals(uriBuilder.docUri(), errorMessage.getPath());
     }
 
     @Test
@@ -126,26 +104,22 @@ public class DocControllerTest extends AbstractTest {
         Doc doc = getValidDoc();
 
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + doc.getId()))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = delete(uriBuilder.docElementUri(doc.getId()));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.OK.value()));
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
     }
 
     @Test
-    public void shouldReturnNotFound_whenDelete_idDoesntExist() throws Exception{
+    public void shouldReturnNotFound_whenDelete_ifIdDoesntExist() throws Exception{
         // When
-        MockHttpServletResponse response = mockMvc.perform(get("/api/doc/" + Long.MAX_VALUE))
-                .andDo(print())
-                .andReturn().getResponse();
+        MockHttpServletResponse response = delete(uriBuilder.docElementUri(Long.MAX_VALUE));
 
         // Then
-        assertThat(response.getStatus(), is(HttpStatus.NOT_FOUND.value()));
+        assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
         ApiErrorMessage errorMessage = parser.asObject(response.getContentAsString(), ApiErrorMessage.class);
-        assertThat(errorMessage.getMessage(), is(String.format(DOC_NOT_FOUND, Long.MAX_VALUE)));
+        assertEquals(String.format(DOC_NOT_FOUND, Long.MAX_VALUE), errorMessage.getMessage());
         assertNotNull(errorMessage.getTime());
-        assertThat(errorMessage.getPath(), is("/api/doc/" + Long.MAX_VALUE));
+        assertEquals(uriBuilder.docElementUri(Long.MAX_VALUE), errorMessage.getPath());
     }
 }
